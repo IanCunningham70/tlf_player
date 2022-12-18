@@ -1,0 +1,8 @@
+.DS_Store
+.source.txt
+.asminfo.txt
+workspace.code-workspace
+*.dbg
+*.sym
+*.vs
+*.prg
