@@ -283,7 +283,7 @@ scroll_text:
 										.text "soldier of fortune"
 										.byte $22 // "
 
-										.text "    composed in december 2022 using sid-factory ii"
+										.text "    composed in december 2022 using sid-factory ii "
 
 										.byte $00					// end of scroll text
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
