@@ -19,6 +19,11 @@
 .var scroller_zeropage    = $aa
 .var scroller_line    = 1024+(40*0)
 
+.const Screen = $0400
+.const colorram = $d800
+
+.const timeLine1 = 10
+.const timeLine2 = 11
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // load music
@@ -43,8 +48,13 @@ music_player:
 
 
 										jsr initialise_music
-
 										jsr init_scroll_text
+										jsr InitStableRaster
+										
+										// setup clock
+
+										jsr InitTimer
+										jsr InitClock
 
 										ldx #80
 								!:		lda #GREY
@@ -81,16 +91,30 @@ music_player:
 case:									jmp case
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-										.memblock "IrqMusic"
+										.memblock "Music IRQ"
 IrqMusic:
 										sta IrqMusicAback + 1
 										stx IrqMusicXback + 1
 										sty IrqMusicYback + 1
 
+										lda #$ef    					// space to restart music 
+										cmp $dc01
+										bne !+
+										lda #0
+										tay
+										tax
+										jsr music.init
+										jsr InitTimer
+										jsr InitClock
+										jmp stlc
+
+								!: 		jsr music.play
+
+										jsr SetTimer
+
+stlc:
 										lda #200
 										sta smoothpos
-
-                                        jsr music.play
 
 										jsr scroller_2x2
 
@@ -109,7 +133,8 @@ IrqMusicYback:				        	ldy #$ff
 
 										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+										.memblock "2x2 Scroller"
+										
 IrqScroller:
 										sta IrqMusicAback + 1
 										stx IrqMusicXback + 1
@@ -129,6 +154,7 @@ IrqScroller:
 										ldx #$0a
 										dex
 										bne *-1
+
 
 										lda #200
 										sta smoothpos
@@ -150,11 +176,173 @@ IrqScrollerXback:			         	ldx #$ff
 IrqScrollerYback:			        	ldy #$ff
 
 										rti
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                      	.memblock "InitStableRaster"
+InitStableRaster:
+										lda #0
+										sta $d015
+
+								!: 		bit screenmode
+										bpl !-
+								!:		bit screenmode
+										bmi !-
+
+										ldx raster
+										inx
+										cpx raster
+										bne *-3
+										ldy #$0a
+										dey
+										bne *-1
+										inx
+										cpx raster
+										nop
+										beq *+5
+										nop
+										bit $24
+										ldy #$09
+										dey
+										bne *-1
+										nop
+										nop
+										inx
+										cpx raster
+										nop
+										beq *+4
+										bit $24
+										ldy #$0a
+										dey
+										bne *-1
+										inx
+										cpx raster
+										bne *+2
+										nop
+										nop
+										nop
+										nop
+										nop
+
+										lda #$3e
+										sta $dd06
+										sty $dd07
+										lda #%00010001
+										sta $dd0f
+
+										rts
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+										.memblock "InitClock"
+InitClock:
+										lda $dc0e
+										ora #%10000000
+										sta $dc0e   // 50Hz
+
+										lda #0
+										sta $dc0b   // Stunden = 0 und Uhr stoppen
+										sta $dc0a   // Minuten = 0
+										sta $dc09   // Sekunden = 0
+										sta $dc08   // Zehntel = 0 und Uhr starten
+										rts
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+										.memblock "InitTimer"
+InitTimer:
+										lda #0
+										sta secl
+										sta sech
+										sta minl
+										sta minh
+										rts
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+										.memblock "SetTimer2"
+SetTimer:
+										lda $dc09
+										and #%00001111
+										sta secl
+
+										lda $dc09
+										and #%01111000
+										lsr
+										lsr
+										lsr
+										lsr
+										sta sech
+
+										lda $dc0a
+										and #%00001111
+										sta minl
+
+										lda $dc0a
+										and #%01111000
+										lsr
+										lsr
+										lsr
+										lsr
+										sta minh
+
+										// plot minute hi in 2 x 2 
+
+										ldx minh
+										lda chartab,x
+										sta Screen + 40 * timeLine1 + 8
+										clc
+										adc #$40
+										sta Screen + 40 * timeLine1 + 9
+										clc
+										adc #$40
+										sta Screen + 40 * timeLine2 + 8
+										clc
+										adc #$40
+										sta Screen + 40 * timeLine2 + 9
 
 
+										// plot minute lo in 2 x 2 
+
+										ldx minl
+										lda chartab,x
+										sta Screen + 40 * timeLine1 + 10
+										clc
+										adc #$40
+										sta Screen + 40 * timeLine1 + 11
+										clc
+										adc #$40
+										sta Screen + 40 * timeLine2 + 10
+										clc
+										adc #$40
+										sta Screen + 40 * timeLine2 + 11
+
+
+										// plot second hi in 2 x 2 
+
+										ldx sech
+										lda chartab,x
+										sta Screen + 40 * timeLine1 + 14
+										clc
+										adc #$40
+										sta Screen + 40 * timeLine1 + 15
+										clc
+										adc #$40
+										sta Screen + 40 * timeLine2 + 14
+										clc
+										adc #$40
+										sta Screen + 40 * timeLine2 + 15
+
+										// plot second lo in 2 x 2 
+
+										ldx secl
+										lda chartab,x
+										sta Screen + 40 * timeLine1 + 16
+										clc
+										adc #$40
+										sta Screen + 40 * timeLine1 + 17
+										clc
+										adc #$40
+										sta Screen + 40 * timeLine2 + 16
+										clc
+										adc #$40
+										sta Screen + 40 * timeLine2 + 17
+										rts
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 initialise_music:						lda #$00		
@@ -255,6 +443,11 @@ scroller_width:    						.byte $00
 scroller_tempChar:    					.byte $00
 scroller_pauseLength:   				.byte 100,125,150,175,200,225,250
 
+secl:                                   .byte $00
+sech:                                   .byte $00
+minl:                                   .byte $00
+minh:                                   .byte $00
+chartab:                               	.byte $30, $31, $32, $33, $34, $35, $36, $37, $38, $39		// numbers 0 - 9 for clock
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 

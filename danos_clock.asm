@@ -1,26 +1,10 @@
 //----------------------------------------------------------------------
-//.const screen = $4800
+.var Screen = $0400
 .const colorram = $d800
 //--------------
-.const timeLine1 = 20
-.const timeLine2 = 21
+.const timeLine1 = 10
+.const timeLine2 = 11
 //----------------------------------------------------------------------
-.var fileCharset = LoadBinary("hires2x2.chr", BF_C64FILE)
-//----------------------------------------------------------------------
-                                          .pc = $4000 "Charset"
-Charset:
-.fill fileCharset.getSize(), fileCharset.get(i)
-//----------------------------------------------------------------------
-                                          .pc = $4800 "Screen"
-Screen:
-.fill 40 * 25, $20
-//----------------------------------------------------------------------
-                                          .pc = $4c00 "Sprites"
-Sprites:
-.fill fileSprites.getSize(), fileSprites.get(i) ^ $ff
-//----------------------------------------------------------------------
-                                          .pc = $4e00 "Init"
-Init:
                                           jsr InitStableRaster
 
                                           jsr InitTimer
@@ -42,12 +26,6 @@ Init:
 Mainloop:
 
                                           jmp Mainloop
-//----------------------------------------------------------------------
-TextLine1:                                .text vText1
-TextLine2:                                .text vText2
-TextLine3:                                .text vText3
-Time:                                     .text vTime
-TextLine4:                                .text vText4
 //----------------------------------------------------------------------
                                           .memblock "InitStableRaster"
 InitStableRaster:
@@ -290,18 +268,3 @@ logooff:                                  lda #$3f + (21 * 2) + 2
 
                                           rti
 //-------------------
-FlashColors:
-                                          .byte $00, $00, $00, $00
-                                          .byte $09, $09, $09, $09
-                                          .byte $08, $08, $08, $08
-                                          .byte $0a, $0a, $0a, $0a
-                                          .byte $0f, $0f, $0f, $0f
-                                          .byte $07, $07, $07, $0f
-                                          .byte $01, $01, $01, $01
-                                          .byte $07, $07, $07, $07
-                                          .byte $03, $03, $03, $03
-                                          .byte $0e, $0e, $0e, $0e
-                                          .byte $04, $04, $04, $04
-                                          .byte $06, $06, $06, $06
-                                          .byte $00, $00, $00, $00
-//----------------------------------------------------------------------
