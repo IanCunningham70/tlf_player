@@ -57,7 +57,7 @@ music_player:
 										jsr InitClock
 
 										ldx #80
-								!:		lda #GREY
+								!:		lda #YELLOW
 										sta scroller_line+$d400,x
 										lda #32
 										sta scroller_line,x
@@ -161,7 +161,11 @@ IrqScroller:
 										lda #26
 										sta charset
 
+										// logo IRQ
 
+										// tune info IRQ
+
+										// these are the final IRQ loop setting to go back to the start.
           								lda #$00
 										sta raster
 										ldx #<IrqMusic
@@ -182,7 +186,7 @@ IrqScrollerYback:			        	ldy #$ff
                                       	.memblock "InitStableRaster"
 InitStableRaster:
 										lda #0
-										sta $d015
+										sta spriteset
 
 								!: 		bit screenmode
 										bpl !-
@@ -248,17 +252,17 @@ InitClock:
 										.memblock "InitTimer"
 InitTimer:
 										lda #0
-										sta secl
-										sta sech
-										sta minl
-										sta minh
+										sta seconds_lo
+										sta seconds_hi
+										sta minute_lo
+										sta minute_hi
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "SetTimer2"
 SetTimer:
 										lda $dc09
 										and #%00001111
-										sta secl
+										sta seconds_lo
 
 										lda $dc09
 										and #%01111000
@@ -266,11 +270,11 @@ SetTimer:
 										lsr
 										lsr
 										lsr
-										sta sech
+										sta seconds_hi
 
 										lda $dc0a
 										and #%00001111
-										sta minl
+										sta minute_lo
 
 										lda $dc0a
 										and #%01111000
@@ -278,11 +282,11 @@ SetTimer:
 										lsr
 										lsr
 										lsr
-										sta minh
+										sta minute_hi
 
 										// plot minute hi in 2 x 2 
 
-										ldx minh
+										ldx minute_hi
 										lda chartab,x
 										sta Screen + 40 * timeLine1 + 8
 										clc
@@ -298,7 +302,7 @@ SetTimer:
 
 										// plot minute lo in 2 x 2 
 
-										ldx minl
+										ldx minute_lo
 										lda chartab,x
 										sta Screen + 40 * timeLine1 + 10
 										clc
@@ -314,7 +318,7 @@ SetTimer:
 
 										// plot second hi in 2 x 2 
 
-										ldx sech
+										ldx seconds_hi
 										lda chartab,x
 										sta Screen + 40 * timeLine1 + 14
 										clc
@@ -329,7 +333,7 @@ SetTimer:
 
 										// plot second lo in 2 x 2 
 
-										ldx secl
+										ldx seconds_lo
 										lda chartab,x
 										sta Screen + 40 * timeLine1 + 16
 										clc
@@ -345,6 +349,7 @@ SetTimer:
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+										.memblock "initialise music"
 initialise_music:						lda #$00		
 										tax
 										tay
@@ -353,9 +358,7 @@ initialise_music:						lda #$00
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-// 2x2 scroller
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+										.memblock "2x2 scroller with pause"
 scroller_2x2:		  					lda scroll_delay
 										beq asc00
 										dec scroll_delay
@@ -443,12 +446,11 @@ scroller_width:    						.byte $00
 scroller_tempChar:    					.byte $00
 scroller_pauseLength:   				.byte 100,125,150,175,200,225,250
 
-secl:                                   .byte $00
-sech:                                   .byte $00
-minl:                                   .byte $00
-minh:                                   .byte $00
+seconds_lo:                             .byte $00
+seconds_hi:                             .byte $00
+minute_lo:                              .byte $00
+minute_hi:                              .byte $00
 chartab:                               	.byte $30, $31, $32, $33, $34, $35, $36, $37, $38, $39		// numbers 0 - 9 for clock
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -462,17 +464,16 @@ tune_text:
 										.text "           soldier of fortune           "
 										.text "            composed by tlf             "
 										.text "            in sid-factory 2            "
-										.text "                                        "
+										.text "          time : 00:00 / 03:04          "
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // 2x2 scroll text.
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-.align $100
-.memblock "scroll text"
+										.align $100
+										.memblock "scroll text"
 scroll_text:
-									//	.text "01234567890123456789"
 										.text "        padua presents  tlf music player v1 coded by case, logo by premium this charset by mad"
 										.text " and of course music by tlf .... this tune called "
 
@@ -486,12 +487,13 @@ scroll_text:
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+// import all gfx for the player
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 										* = $2000
 										.memblock "2x2 font"
 										.import c64 "gfx/2x2-mad.prg"
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
 										* = $2800
 										.memblock "1x1 font"
 										.import c64 "gfx/1x1-cupid.prg"
