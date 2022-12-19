@@ -6,24 +6,29 @@
 // memory map
 //
 // music : $0c00 - $1fff
-// 2x2 font : $2800
-// 
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+// bitmap : $200
+// 1x1 : $4800
+// 2x2 : $5000
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 #import "standardlibrary.asm"			
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 .var scroller_zeropage    = $aa
 .var scroller_line    = 1024+(40*0)
+.var screen_data = $3f40
+.var color_data = $4328
+.var back_colour = $4710
 
 .const Screen = $0400
-.const colorram = $d800
+.const color_ram = $d800
 
+// line to display the clock on
 .const timeLine1 = 10
 .const timeLine2 = 11
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // load music
@@ -37,15 +42,13 @@
 BasicUpstart2(music_player)
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "main code"
-										* = $4000
+										* = $c000
 music_player:
-
 										// jsr basic_fader
 
 										lda #BLACK
 										sta screen
 										sta border									
-
 
 										jsr initialise_music
 										jsr init_scroll_text
@@ -55,6 +58,9 @@ music_player:
 
 										jsr InitTimer
 										jsr InitClock
+
+										jsr show_Koala
+
 
 										ldx #80
 								!:		lda #YELLOW
@@ -89,6 +95,32 @@ music_player:
 										cli
 
 case:									jmp case
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+										.memblock "show koala"
+show_Koala:								ldx #00
+								!:		lda screen_data,x
+										sta Screen,x
+										lda screen_data + $100,x
+										sta Screen + $100,x
+										lda screen_data + $200,x
+										sta Screen + $200,x
+										lda screen_data + $300,x
+										sta Screen + $300,x
+										lda color_data,x
+										sta color_ram,x
+										lda color_data + $100,x
+										sta color_ram + $100,x
+										lda color_data + $200,x
+										sta color_ram + $200,x
+										lda color_data + $300,x
+										sta color_ram + $300,x
+										dex
+										bne !-
+										rts
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "Music IRQ"
@@ -115,6 +147,8 @@ IrqMusic:
 stlc:
 										lda #200
 										sta smoothpos
+										lda #$1b
+										sta screenmode
 
 										jsr scroller_2x2
 
@@ -134,9 +168,8 @@ IrqMusicYback:				        	ldy #$ff
 										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "2x2 Scroller"
-										
-IrqScroller:
-										sta IrqMusicAback + 1
+
+IrqScroller:							sta IrqMusicAback + 1
 										stx IrqMusicXback + 1
 										sty IrqMusicYback + 1
 
@@ -148,20 +181,53 @@ IrqScroller:
 										ora scroll_xposition
 										sta smoothpos
 
-										lda #(2*8)+$32                 // calculate raster line
+										lda #(2*8)+$32                 // calculate raster line for bottom of scroller
 										cmp raster
 										bne *-3
 										ldx #$0a
 										dex
 										bne *-1
-
-
-										lda #200
+										lda #216
 										sta smoothpos
 										lda #26
 										sta charset
+										lda #$3b
+										sta screenmode
 
-										// logo IRQ
+										// birmap IRQ
+
+										// tune info IRQ
+
+										// these are the final IRQ loop setting to go back to the start.
+										lda #(6*8)+$32                 // calculate raster line for top of the logo
+										sta raster
+										ldx #<IrqBitmap
+										ldy #>IrqBitmap
+										stx $fffe
+										sty $ffff
+
+										asl $d019
+
+IrqScrollerAback:				        lda #$ff
+IrqScrollerXback:			         	ldx #$ff
+IrqScrollerYback:			        	ldy #$ff
+
+										rti
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+										.memblock "bitmap logo"
+
+IrqBitmap:								sta IrqBitmapAback + 1
+										stx IrqBitmapXback + 1
+										sty IrqBitmapYback + 1
+
+										lda #216
+										sta smoothpos
+										lda #26
+										sta charset
+										lda #$3b
+										sta screenmode
+
+										// birmap IRQ
 
 										// tune info IRQ
 
@@ -174,13 +240,17 @@ IrqScroller:
 										sty $ffff
 
 										asl $d019
-
-IrqScrollerAback:				        lda #$ff
-IrqScrollerXback:			         	ldx #$ff
-IrqScrollerYback:			        	ldy #$ff
-
+IrqBitmapAback:					        lda #$ff
+IrqBitmapXback:				         	ldx #$ff
+IrqBitmapYback:				        	ldy #$ff
 										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
                                       	.memblock "InitStableRaster"
@@ -461,7 +531,7 @@ chartab:                               	.byte $30, $31, $32, $33, $34, $35, $36,
 .memblock "tune text"
 tune_text:
 									//	.text "----------------------------------------"
-										.text "           soldier of fortune           "
+										.text "                 yellow                 "
 										.text "            composed by tlf             "
 										.text "            in sid-factory 2            "
 										.text "          time : 00:00 / 03:04          "
@@ -489,12 +559,15 @@ scroll_text:
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // import all gfx for the player
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 										* = $2000
-										.memblock "2x2 font"
-										.import c64 "gfx/2x2-mad.prg"
+										.memblock "bitmap logo"
+										.import c64 "gfx/tlf.kla"
 
-										* = $2800
+										* = $4800
 										.memblock "1x1 font"
 										.import c64 "gfx/1x1-cupid.prg"
+
+										* = $5000
+										.memblock "2x2 font"
+										.import c64 "gfx/2x2-mad.prg"
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
