@@ -33,7 +33,7 @@
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // load music
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-.var music = LoadSid("sid\Yellow.sid")
+.var music = LoadSid("sids\Yellow.sid")
 .pc = music.location "Music"
 .fill music.size, music.getData(i)
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -68,7 +68,7 @@ music_player:
 										lda #32
 										sta scroller_line,x
 										dex
-										bne !-
+										bpl !-
 
 										sei
 										lda #$35
@@ -194,11 +194,6 @@ IrqScroller:							sta IrqMusicAback + 1
 										lda #$3b
 										sta screenmode
 
-										// birmap IRQ
-
-										// tune info IRQ
-
-										// these are the final IRQ loop setting to go back to the start.
 										lda #(6*8)+$32                 // calculate raster line for top of the logo
 										sta raster
 										ldx #<IrqBitmap
@@ -226,8 +221,6 @@ IrqBitmap:								sta IrqBitmapAback + 1
 										sta charset
 										lda #$3b
 										sta screenmode
-
-										// birmap IRQ
 
 										// tune info IRQ
 
