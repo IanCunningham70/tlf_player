@@ -5,10 +5,11 @@
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // memory map
 //
-// music : $0c00 - $1fff
-// bitmap : $200
-// 1x1 : $4800
-// 2x2 : $5000
+// music 	: $0c00 - $3fff
+// 1x1 		: $4800
+// 2x2 		: $5000
+// bitmap 	: $6000
+// code		: $4000
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -16,18 +17,19 @@
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-.var scroller_zeropage    = $aa
-.var scroller_line    = 1024+(40*0)
-.var screen_data = $3f40
-.var color_data = $4328
-.var back_colour = $4710
 
-.const Screen = $0400
+.const Screen = $4000
 .const color_ram = $d800
 
 // line to display the clock on
-.const timeLine1 = 10
-.const timeLine2 = 11
+.const timeLine1 = 2
+.const timeLine2 = 3
+
+.var scroller_zeropage    = $aa
+.var scroller_line    = Screen + (40*0)
+.var screen_data = $3f40 + $4000
+.var color_data = $4328 + $4000
+
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -43,9 +45,9 @@ BasicUpstart2(music_player)
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "main code"
 										* = $c000
-music_player:
 										// jsr basic_fader
 
+music_player:
 										lda #BLACK
 										sta screen
 										sta border									
@@ -59,16 +61,37 @@ music_player:
 										jsr InitTimer
 										jsr InitClock
 
+// switch to bank 1
+										lda $dd00
+										and #%11111100
+										ora #%00000010
+										sta $dd00
+
 										jsr show_Koala
 
+// clear top 4 lines for scoller text and colour YELLOW
 
-										ldx #80
+										ldx #160
 								!:		lda #YELLOW
-										sta scroller_line+$d400,x
+										sta $d800,x
 										lda #32
 										sta scroller_line,x
 										dex
-										bpl !-
+										bne !-
+// plot :
+										lda #$3a
+										sta Screen + 40 * timeLine1 + 34
+										clc
+										adc #$40
+										sta Screen + 40 * timeLine1 + 35
+										clc
+										adc #$40
+										sta Screen + 40 * timeLine2 + 34
+										clc
+										adc #$40
+										sta Screen + 40 * timeLine2 + 35
+
+
 
 										sei
 										lda #$35
@@ -102,20 +125,24 @@ case:									jmp case
 show_Koala:								ldx #00
 								!:		lda screen_data,x
 										sta Screen,x
-										lda screen_data + $100,x
-										sta Screen + $100,x
-										lda screen_data + $200,x
-										sta Screen + $200,x
-										lda screen_data + $300,x
-										sta Screen + $300,x
+										lda screen_data + (255 * 1),x
+										sta Screen + (255 * 1),x
+										lda screen_data + (255 * 2),x
+										sta Screen + (255 * 2),x
+										lda screen_data + (255 * 3),x
+										sta Screen + (255 * 3),x
+
 										lda color_data,x
 										sta color_ram,x
-										lda color_data + $100,x
-										sta color_ram + $100,x
-										lda color_data + $200,x
-										sta color_ram + $200,x
-										lda color_data + $300,x
-										sta color_ram + $300,x
+										
+										lda color_data + (255 * 1),x
+										sta color_ram + (255 * 1),x
+										
+										lda color_data + (255 * 2),x
+										sta color_ram + (255 * 2),x
+
+										lda color_data + (255 * 3),x
+										sta color_ram + (255 * 3),x
 										dex
 										bne !-
 										rts
@@ -173,7 +200,7 @@ IrqScroller:							sta IrqMusicAback + 1
 										stx IrqMusicXback + 1
 										sty IrqMusicYback + 1
 
-										lda #24
+										lda #%00000100					// point to charset at $4800
 										sta charset
 
 										lda smoothpos
@@ -181,23 +208,10 @@ IrqScroller:							sta IrqMusicAback + 1
 										ora scroll_xposition
 										sta smoothpos
 
-										lda #(2*8)+$32                 // calculate raster line for bottom of scroller
-										cmp raster
-										bne *-3
-										ldx #$0a
-										dex
-										bne *-1
-										lda #216
-										sta smoothpos
-										lda #26
-										sta charset
-										lda #$3b
-										sta screenmode
-
-										lda #(6*8)+$32                 // calculate raster line for top of the logo
+										lda #(2*8)+$31                 // calculate raster line for top of the logo
 										sta raster
-										ldx #<IrqBitmap
-										ldy #>IrqBitmap
+										ldx #<IrqClock
+										ldy #>IrqClock
 										stx $fffe
 										sty $ffff
 
@@ -209,17 +223,55 @@ IrqScrollerYback:			        	ldy #$ff
 
 										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+										.memblock "Clock IRQ"
+IrqClock:
+										sta IrqClockAback + 1
+										stx IrqClockXback + 1
+										sty IrqClockYback + 1
+	
+										ldx #$0a
+										dex
+										bne *-1
+										lda #200						// stop smooth scrolling and change to bitmap mode
+										sta smoothpos
+	
+
+
+
+										lda #(4*8)+$32                 // calculate raster line for top of the logo
+										sta raster
+										ldx #<IrqBitmap
+										ldy #>IrqBitmap
+										stx $fffe
+										sty $ffff
+
+										asl $d019
+
+IrqClockAback:					        lda #$ff
+IrqClockXback:				         	ldx #$ff
+IrqClockYback:				        	ldy #$ff
+
+										rti
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "bitmap logo"
 
 IrqBitmap:								sta IrqBitmapAback + 1
 										stx IrqBitmapXback + 1
 										sty IrqBitmapYback + 1
 
-										lda #216
+										lda #216						// stop smooth scrolling and change to bitmap mode
 										sta smoothpos
-										lda #26
+										lda #%00001000					// point to bitmap data $6000, screen at $4000
 										sta charset
-										lda #$3b
+										lda #$3b						// switch on bitmap mode.
 										sta screenmode
 
 										// tune info IRQ
@@ -238,12 +290,6 @@ IrqBitmapXback:				         	ldx #$ff
 IrqBitmapYback:				        	ldy #$ff
 										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
                                       	.memblock "InitStableRaster"
@@ -351,63 +397,63 @@ SetTimer:
 
 										ldx minute_hi
 										lda chartab,x
-										sta Screen + 40 * timeLine1 + 8
+										sta Screen + 40 * timeLine1 + 30
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine1 + 9
+										sta Screen + 40 * timeLine1 + 31
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 8
+										sta Screen + 40 * timeLine2 + 30
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 9
+										sta Screen + 40 * timeLine2 + 31
 
 
 										// plot minute lo in 2 x 2 
 
 										ldx minute_lo
 										lda chartab,x
-										sta Screen + 40 * timeLine1 + 10
+										sta Screen + 40 * timeLine1 + 32
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine1 + 11
+										sta Screen + 40 * timeLine1 + 33
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 10
+										sta Screen + 40 * timeLine2 + 32
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 11
+										sta Screen + 40 * timeLine2 + 33
 
 
 										// plot second hi in 2 x 2 
 
 										ldx seconds_hi
 										lda chartab,x
-										sta Screen + 40 * timeLine1 + 14
+										sta Screen + 40 * timeLine1 + 36
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine1 + 15
+										sta Screen + 40 * timeLine1 + 37
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 14
+										sta Screen + 40 * timeLine2 + 36
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 15
+										sta Screen + 40 * timeLine2 + 37
 
 										// plot second lo in 2 x 2 
 
 										ldx seconds_lo
 										lda chartab,x
-										sta Screen + 40 * timeLine1 + 16
+										sta Screen + 40 * timeLine1 + 38
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine1 + 17
+										sta Screen + 40 * timeLine1 + 39
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 16
+										sta Screen + 40 * timeLine2 + 38
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 17
+										sta Screen + 40 * timeLine2 + 39
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -525,26 +571,31 @@ chartab:                               	.byte $30, $31, $32, $33, $34, $35, $36,
 tune_text:
 									//	.text "----------------------------------------"
 										.text "                 yellow                 "
-										.text "            composed by tlf             "
+										.text "        composed by tlf of padua        "
 										.text "            in sid-factory 2            "
 										.text "          time : 00:00 / 03:04          "
+										.text "        space to restart the tune       "
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // 2x2 scroll text.
+//
+// enter .byte $1f followed by a number from 1 - 6 for different pause's.
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.align $100
 										.memblock "scroll text"
 scroll_text:
-										.text "        padua presents  tlf music player v1 coded by case, logo by premium this charset by mad"
+										.text "        padua presents     "
+										.byte $1f,4
+										.text "                   tlf music player v1 coded by case, logo by premium this charset by mad"
 										.text " and of course music by tlf .... this tune called "
 
 										.byte $22 // "
 										.text "yellow"
 										.byte $22 // "
 
-										.text "    composed in 2022  "
+										.text "    composed in 2022, this is a test for the player.                                        "
 
 										.byte $00					// end of scroll text
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -552,10 +603,6 @@ scroll_text:
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // import all gfx for the player
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-										* = $2000
-										.memblock "bitmap logo"
-										.import c64 "gfx/tlf.kla"
-
 										* = $4800
 										.memblock "1x1 font"
 										.import c64 "gfx/1x1-cupid.prg"
@@ -563,4 +610,10 @@ scroll_text:
 										* = $5000
 										.memblock "2x2 font"
 										.import c64 "gfx/2x2-mad.prg"
+
+										* = $6000
+										.memblock "bitmap logo"
+										.import c64 "gfx/tlf.kla"
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+// space memory from $5800 to $5fff
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
