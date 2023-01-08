@@ -627,9 +627,9 @@ chartab:                               	.byte $30, $31, $32, $33, $34, $35, $36,
 .memblock "tune text"
 tune_text:							
 									//	.text "----------------------------------------"
-										.text "                 yellow                 "
+										.text "   Donkey King Country (Sid Version)    "
+										.text "       memory usage $1000 - $2fff       "
 										.text "        space to restart the tune       "
-										.text "       memory usage $1000 - $1fff       "
 									//	.text "----------------------------------------"
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -642,19 +642,14 @@ tune_text:
 										.align $100
 										.memblock "scroll text"
 scroll_text:
-										.text "        padua presents  "
-										.byte $1f,4
-										.text "                   tlf music player coded by case, logo by premium this charset 2x2 by mad"
-										.text " the nice 1x1 charset by cupid ....... and of course music by tlf .... this tune called           "
+										.text "        tlf of padua presents  "
 
 										.byte $22 // "
-										.text "yellow"
+										.text "donky kong country"
 										.byte $22 // "
-										.text "       "
-										.byte $1f,4
-
-										.text "    composed in 2022, this is a test for the player.                                        "
-
+										.text "                   credits go like this ..... tlf music player coded by case, logo by premium this " 
+										.text "charset 2x2 by mad the nice 1x1 charset by cupid ....... and of course music by tlf "
+										.text "                    "
 										.byte $00					// end of scroll text
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
