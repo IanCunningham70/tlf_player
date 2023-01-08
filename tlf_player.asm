@@ -13,7 +13,7 @@
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-#import "standardlibrary.asm"			
+#import "..\library\standardlibrary.asm"			
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -30,6 +30,7 @@
 .var screen_data = $3f40 + $4000
 .var color_data = $4328 + $4000
 
+.var tuneInfoLine = Screen + (40 * 21)
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -76,6 +77,10 @@ music_player:
 										sta $d800,x
 										lda #32
 										sta scroller_line,x
+
+										lda tune_text,x
+										sta tuneInfoLine,x
+
 										dex
 										bne !-
 // plot :
@@ -90,8 +95,6 @@ music_player:
 										clc
 										adc #$40
 										sta Screen + 40 * timeLine2 + 35
-
-
 
 										sei
 										lda #$35
@@ -237,11 +240,8 @@ IrqClock:
 										ldx #$0a
 										dex
 										bne *-1
-										lda #200						// stop smooth scrolling and change to bitmap mode
+										lda #200
 										sta smoothpos
-	
-
-
 
 										lda #(4*8)+$32                 // calculate raster line for top of the logo
 										sta raster
@@ -255,7 +255,6 @@ IrqClock:
 IrqClockAback:					        lda #$ff
 IrqClockXback:				         	ldx #$ff
 IrqClockYback:				        	ldy #$ff
-
 										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -275,6 +274,40 @@ IrqBitmap:								sta IrqBitmapAback + 1
 										sta screenmode
 
 										// tune info IRQ
+          								lda #$d2
+										sta raster
+										ldx #<IrqTuneInfo
+										ldy #>IrqTuneInfo
+										stx $fffe
+										sty $ffff
+
+										asl $d019
+IrqBitmapAback:					        lda #$ff
+IrqBitmapXback:				         	ldx #$ff
+IrqBitmapYback:				        	ldy #$ff
+										rti
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+										.memblock "tune info"
+
+IrqTuneInfo:							sta IrqTuneInfoAback + 1
+										stx IrqTuneInfoXback + 1
+										sty IrqTuneInfoYback + 1
+
+										// timing purposes
+										ldx #$06
+										dex
+										bne *-1
+
+										lda #200						// stop smooth scrolling and change to bitmap mode
+										sta smoothpos
+										lda #%00000010					// point to charset at $4800
+										sta charset
+										lda #$1b						// switch on bitmap mode.
+										sta screenmode
+
+										// tune info IRQ
 
 										// these are the final IRQ loop setting to go back to the start.
           								lda #$00
@@ -285,9 +318,9 @@ IrqBitmap:								sta IrqBitmapAback + 1
 										sty $ffff
 
 										asl $d019
-IrqBitmapAback:					        lda #$ff
-IrqBitmapXback:				         	ldx #$ff
-IrqBitmapYback:				        	ldy #$ff
+IrqTuneInfoAback:					    lda #$ff
+IrqTuneInfoXback:				        ldx #$ff
+IrqTuneInfoYback:				        ldy #$ff
 										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -568,13 +601,13 @@ chartab:                               	.byte $30, $31, $32, $33, $34, $35, $36,
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 .align $100
 .memblock "tune text"
-tune_text:
+tune_text:							
 									//	.text "----------------------------------------"
 										.text "                 yellow                 "
 										.text "        composed by tlf of padua        "
 										.text "            in sid-factory 2            "
-										.text "          time : 00:00 / 03:04          "
 										.text "        space to restart the tune       "
+									//	.text "----------------------------------------"
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -605,15 +638,13 @@ scroll_text:
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										* = $4800
 										.memblock "1x1 font"
-										.import c64 "gfx/1x1-cupid.prg"
+										.import c64 "charsets/1x1-cupid.prg"
 
 										* = $5000
 										.memblock "2x2 font"
-										.import c64 "gfx/2x2-mad.prg"
+										.import c64 "charsets/2x2-mad.prg"
 
 										* = $6000
 										.memblock "bitmap logo"
 										.import c64 "gfx/tlf.kla"
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-// space memory from $5800 to $5fff
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
