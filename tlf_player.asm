@@ -30,7 +30,7 @@
 .var screen_data = $3f40 + $4000
 .var color_data = $4328 + $4000
 
-.var tuneInfoLine = Screen + (40 * 20)
+.var tuneInfoLine = Screen + (40 * 21)
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -49,18 +49,15 @@ BasicUpstart2(music_player)
 										// jsr basic_fader
 
 music_player:
-										lda #BLACK
+										lda #BLUE
 										sta screen
 										sta border									
 
 										jsr initialise_music
 										jsr init_scroll_text
 										jsr InitStableRaster
-										
-										// setup clock
-
-										jsr InitTimer
-										jsr InitClock
+										jsr InitTimer		// setup clock
+										jsr InitClock		
 
 // switch to bank 1
 										lda $dd00
@@ -70,7 +67,7 @@ music_player:
 
 										jsr show_Koala
 
-// clear top 4 lines for scoller text and colour YELLOW
+// clear top 4 lines for scoller text and colour
 
 										ldx #$00
 								!:		lda #LIGHT_GREY
@@ -81,16 +78,27 @@ music_player:
 										cpx #160
 										bne !-
 
+
+										ldx #$00
+								!:		lda #32
+										sta tuneInfoLine-40,x
+										inx
+										cpx #200
+										bne !-
+
 // show tune info at bottom of screen
 										ldx #$00
 								!:		lda #GRAY
-										sta color_ram + (40 * 20),x
+										sta color_ram + (40 * 21),x
 										lda tune_text,x
 										and #$7f
 										sta tuneInfoLine,x
 										inx
-										cpx #200
+										cpx #120
 										bne !-
+
+
+
 
 // plot :
 										lda #$3a
@@ -259,6 +267,13 @@ IrqBitmap:								sta IrqBitmapAback + 1
 										stx IrqBitmapXback + 1
 										sty IrqBitmapYback + 1
 
+										bit $c45e
+										bit $c45e
+										bit $c45e
+										bit $c45e
+										bit $c45e
+										bit $c45e
+
 										lda #216						// stop smooth scrolling and change to bitmap mode
 										sta smoothpos
 										lda #%00001000					// point to bitmap data $6000, screen at $4000
@@ -288,9 +303,18 @@ IrqTuneInfo:							sta IrqTuneInfoAback + 1
 										sty IrqTuneInfoYback + 1
 
 										// timing purposes
-										ldx #$06
-										dex
-										bne *-1
+										bit $c45e
+										bit $c45e
+										bit $c45e
+										bit $c45e
+										bit $c45e
+										bit $c45e
+
+										nop
+										nop
+										nop
+										nop
+										nop
 
 										lda #200						// stop smooth scrolling and change to bitmap mode
 										sta smoothpos
@@ -594,8 +618,6 @@ chartab:                               	.byte $30, $31, $32, $33, $34, $35, $36,
 tune_text:							
 									//	.text "----------------------------------------"
 										.text "                 yellow                 "
-										.text "        composed by tlf of padua        "
-										.text "            in sid-factory 2            "
 										.text "        space to restart the tune       "
 										.text "       memory usage $1000 - $1fff       "
 									//	.text "----------------------------------------"
