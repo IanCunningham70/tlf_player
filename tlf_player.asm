@@ -274,6 +274,15 @@ IrqBitmap:								sta IrqBitmapAback + 1
 										bit $c45e
 										bit $c45e
 
+										nop
+										nop
+										nop
+										nop
+										nop
+
+										lda #BLACK
+										sta screen
+
 										lda #216						// stop smooth scrolling and change to bitmap mode
 										sta smoothpos
 										lda #%00001000					// point to bitmap data $6000, screen at $4000
@@ -282,7 +291,7 @@ IrqBitmap:								sta IrqBitmapAback + 1
 										sta screenmode
 
 										// tune info IRQ
-          								lda #$d2
+          								lda #$d8
 										sta raster
 										ldx #<IrqTuneInfo
 										ldy #>IrqTuneInfo
@@ -307,8 +316,6 @@ IrqTuneInfo:							sta IrqTuneInfoAback + 1
 										bit $c45e
 										bit $c45e
 										bit $c45e
-										bit $c45e
-										bit $c45e
 
 										nop
 										nop
@@ -316,6 +323,9 @@ IrqTuneInfo:							sta IrqTuneInfoAback + 1
 										nop
 										nop
 
+
+										lda #BLUE
+										sta screen
 										lda #200						// stop smooth scrolling and change to bitmap mode
 										sta smoothpos
 										lda #%00000010					// point to charset at $4800
