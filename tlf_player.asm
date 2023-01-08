@@ -138,23 +138,18 @@ show_Koala:								ldx #00
 										sta Screen + (255 * 2),x
 										lda screen_data + (255 * 3),x
 										sta Screen + (255 * 3),x
-
 										lda color_data,x
 										sta color_ram,x
-										
 										lda color_data + (255 * 1),x
 										sta color_ram + (255 * 1),x
-										
 										lda color_data + (255 * 2),x
 										sta color_ram + (255 * 2),x
-
 										lda color_data + (255 * 3),x
 										sta color_ram + (255 * 3),x
 										dex
 										bne !-
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "Music IRQ"
@@ -192,13 +187,10 @@ stlc:
 										ldy #>IrqScroller
 										stx $fffe
 										sty $ffff
-
 										asl $d019
-
 IrqMusicAback:					        lda #$ff
 IrqMusicXback:				         	ldx #$ff
 IrqMusicYback:				        	ldy #$ff
-
 										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "2x2 Scroller"
@@ -221,18 +213,12 @@ IrqScroller:							sta IrqMusicAback + 1
 										ldy #>IrqClock
 										stx $fffe
 										sty $ffff
-
 										asl $d019
-
 IrqScrollerAback:				        lda #$ff
 IrqScrollerXback:			         	ldx #$ff
 IrqScrollerYback:			        	ldy #$ff
-
 										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "Clock IRQ"
@@ -253,9 +239,7 @@ IrqClock:
 										ldy #>IrqBitmap
 										stx $fffe
 										sty $ffff
-
 										asl $d019
-
 IrqClockAback:					        lda #$ff
 IrqClockXback:				         	ldx #$ff
 IrqClockYback:				        	ldy #$ff
@@ -284,7 +268,6 @@ IrqBitmap:								sta IrqBitmapAback + 1
 										ldy #>IrqTuneInfo
 										stx $fffe
 										sty $ffff
-
 										asl $d019
 IrqBitmapAback:					        lda #$ff
 IrqBitmapXback:				         	ldx #$ff
@@ -310,8 +293,6 @@ IrqTuneInfo:							sta IrqTuneInfoAback + 1
 										sta charset
 										lda #$1b						// switch on bitmap mode.
 										sta screenmode
-
-										// tune info IRQ
 
 										// these are the final IRQ loop setting to go back to the start.
           								lda #$00
@@ -511,7 +492,7 @@ scroller_2x2:		  					lda scroll_delay
 										rts
 asc00:    								lda scroll_xposition
 										sec
-										sbc #$02						// hardcode scroll speed
+										sbc #$03						// hardcode scroll speed
 										and #$07
 										sta scroll_xposition
 										bcc asc01
@@ -611,7 +592,7 @@ tune_text:
 										.text "        composed by tlf of padua        "
 										.text "            in sid-factory 2            "
 										.text "        space to restart the tune       "
-										.text "                                        "
+										.text "       memory usage $1000 - $1fff       "
 									//	.text "----------------------------------------"
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -624,7 +605,7 @@ tune_text:
 										.align $100
 										.memblock "scroll text"
 scroll_text:
-										.text "        padua presents     "
+										.text "        padua presents  "
 										.byte $1f,4
 										.text "                   tlf music player v1 coded by case, logo by premium this charset by mad"
 										.text " and of course music by tlf .... this tune called "
