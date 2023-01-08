@@ -72,16 +72,20 @@ music_player:
 
 // clear top 4 lines for scoller text and colour YELLOW
 
-										ldx #160
-								!:		lda #YELLOW
-										sta $d800,x
+										ldx #$00
+								!:		lda #RED
+										sta color_ram,x
+										sta color_ram + (40 * 21),x
+
 										lda #32
 										sta scroller_line,x
 
 										lda tune_text,x
+										and #$7f
 										sta tuneInfoLine,x
 
-										dex
+										inx
+										cpx #160
 										bne !-
 // plot :
 										lda #$3a
@@ -274,7 +278,7 @@ IrqBitmap:								sta IrqBitmapAback + 1
 										sta screenmode
 
 										// tune info IRQ
-          								lda #$d2
+          								lda #$da
 										sta raster
 										ldx #<IrqTuneInfo
 										ldy #>IrqTuneInfo
@@ -607,6 +611,7 @@ tune_text:
 										.text "        composed by tlf of padua        "
 										.text "            in sid-factory 2            "
 										.text "        space to restart the tune       "
+										.text "                                        "
 									//	.text "----------------------------------------"
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
