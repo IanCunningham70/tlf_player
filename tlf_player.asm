@@ -30,7 +30,7 @@
 .var screen_data = $3f40 + $4000
 .var color_data = $4328 + $4000
 
-.var tuneInfoLine = Screen + (40 * 21)
+.var tuneInfoLine = Screen + (40 * 20)
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -73,20 +73,25 @@ music_player:
 // clear top 4 lines for scoller text and colour YELLOW
 
 										ldx #$00
-								!:		lda #RED
+								!:		lda #LIGHT_GREY
 										sta color_ram,x
-										sta color_ram + (40 * 21),x
-
 										lda #32
 										sta scroller_line,x
-
-										lda tune_text,x
-										and #$7f
-										sta tuneInfoLine,x
-
 										inx
 										cpx #160
 										bne !-
+
+// show tune info at bottom of screen
+										ldx #$00
+								!:		lda #GRAY
+										sta color_ram + (40 * 20),x
+										lda tune_text,x
+										and #$7f
+										sta tuneInfoLine,x
+										inx
+										cpx #200
+										bne !-
+
 // plot :
 										lda #$3a
 										sta Screen + 40 * timeLine1 + 34
@@ -262,7 +267,7 @@ IrqBitmap:								sta IrqBitmapAback + 1
 										sta screenmode
 
 										// tune info IRQ
-          								lda #$da
+          								lda #$d2
 										sta raster
 										ldx #<IrqTuneInfo
 										ldy #>IrqTuneInfo
@@ -607,12 +612,14 @@ tune_text:
 scroll_text:
 										.text "        padua presents  "
 										.byte $1f,4
-										.text "                   tlf music player v1 coded by case, logo by premium this charset by mad"
-										.text " and of course music by tlf .... this tune called "
+										.text "                   tlf music player coded by case, logo by premium this charset 2x2 by mad"
+										.text " the nice 1x1 charset by cupid ....... and of course music by tlf .... this tune called           "
 
 										.byte $22 // "
 										.text "yellow"
 										.byte $22 // "
+										.text "       "
+										.byte $1f,4
 
 										.text "    composed in 2022, this is a test for the player.                                        "
 
