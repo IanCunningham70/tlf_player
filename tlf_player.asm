@@ -44,7 +44,7 @@
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // add a standard run line for basic
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-										*=$0801
+*=$0801
 BasicUpstart2(musicplayer)
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "main code"
@@ -608,8 +608,8 @@ init_scroll_text:						ldx #<scroll_text
 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-.align $100 
-.memblock "data tables"
+										.align $100 
+										.memblock "data tables"
 scroll_xposition:    					.byte $00
 scroll_delay:   						.byte $00
 scroller_width:    						.byte $00
@@ -627,8 +627,8 @@ chartab:                               	.byte $30, $31, $32, $33, $34, $35, $36,
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // 1x1 text, fade on 1 line at a time.
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-.align $100
-.memblock "tune text"
+										.align $100
+										.memblock "tune text"
 tune_text:							
 									//	.text "----------------------------------------"
 										.text "   Donkey King Country (Sid Version)    "
@@ -651,8 +651,10 @@ scroll_text:
 										.byte $22 // "
 										.text "donky kong country"
 										.byte $22 // "
-										.text "                   credits go like this ..... tlf music player coded by case, logo by premium this " 
-										.text "charset 2x2 by mad the nice 1x1 charset by cupid ....... and of course music by tlf "
+
+										.text "    composed for the c64 game remix compo in 2023                                  "
+										.text "                   credits go like this ..... tlf logo by premium, this " 
+										.text "charset 2x2 by mad, cool 1x1 charset by cupid ....... and player code by case with help from dano (thank you)"
 										.text "                    "
 										.byte $00					// end of scroll text
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
