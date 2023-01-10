@@ -1,6 +1,6 @@
 # TLF Music PLayer v1.0
 
-code : case
+code : case + dano
 
 music : tlf
 
