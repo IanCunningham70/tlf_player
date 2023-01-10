@@ -654,7 +654,7 @@ scroll_text:
 
 										.text "    composed for the c64 game remix compo in 2023                                  "
 										.text "                   credits go like this ..... tlf logo by premium, this " 
-										.text "charset 2x2 by mad, cool 1x1 charset by cupid ....... and player code by case with help from dano (thank you)"
+										.text "charset 2x2 by mad, 1x1 charset by cupid ....... and player code by case with help from dano (thank you)"
 										.text "                    "
 										.byte $00					// end of scroll text
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
