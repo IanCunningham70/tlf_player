@@ -92,14 +92,13 @@ keyscan:									jsr $ffe4
 
 irq:
 
-											ldx #$da
+											ldx #$fa
 											cpx raster
 											bne *-3
 
-											ldx #$0a
+											ldx #$0b
 											dex
 											bne *-1
-
 
 											SetBoth(LIGHT_GREEN)
 											lda raster
@@ -207,8 +206,8 @@ ras_2:	.byte	$00
 
 tune_text:							
 									//	.text "----------------------------------------"
-										.text "     TLF - DQP (dirty quick player)     "
-										.text "   Donkey King Country (Sid Version)    "
+										.text "                                        "
+										.text "   Donkey Kong Country (Sid Version)    "
 										.text "       memory usage $1000 - $23d0       "
 										.text "        space to restart the tune       "
 										.text "                                        "
