@@ -13,6 +13,11 @@
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+// remove the screen and replace with a text plotter routine, or create a seperate version.
+// add time details to the time line, maybe add raster time usage aswell.
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 #import "..\library\standardlibrary.asm"			
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -27,8 +32,8 @@
 
 .var scroller_zeropage    = $aa
 .var scroller_line    = Screen + (40*0)
-.var screen_data = $3f40 + $4000
-.var color_data = $4328 + $4000
+.var screen_data = $3f40 + Screen
+.var color_data = $4328 + Screen
 
 .var tuneInfoLine = Screen + (40 * 21)
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -60,7 +65,7 @@ musicplayer:
 										jsr initialise_music
 										jsr init_scroll_text
 										jsr InitStableRaster
-										jsr InitTimer		// setup clock
+										jsr InitTimer					// setup clock
 										jsr InitClock		
 
 // switch to bank 1
@@ -101,10 +106,7 @@ musicplayer:
 										cpx #120
 										bne !-
 
-
-
-
-// plot :
+// plot : for clock
 										lda #$3a
 										sta Screen + 40 * timeLine1 + 34
 										clc
@@ -320,13 +322,11 @@ IrqTuneInfo:							sta IrqTuneInfoAback + 1
 										bit $c45e
 										bit $c45e
 										bit $c45e
-
 										nop
 										nop
 										nop
 										nop
 										nop
-
 
 										lda #BLUE
 										sta screen
