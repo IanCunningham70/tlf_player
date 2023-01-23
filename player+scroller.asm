@@ -279,6 +279,8 @@ IrqBitmap:								sta IrqBitmapAback + 1
 										stx IrqBitmapXback + 1
 										sty IrqBitmapYback + 1
 
+										// timing to move vold dots off the screen
+										
 										bit $c45e
 										bit $c45e
 										bit $c45e
@@ -292,9 +294,8 @@ IrqBitmap:								sta IrqBitmapAback + 1
 										nop
 										nop
 
-										lda #BLACK
+										lda #BLACK						// set colour of bitmap background
 										sta screen
-
 										lda #216						// stop smooth scrolling and change to bitmap mode
 										sta smoothpos
 										lda #%00001000					// point to bitmap data $6000, screen at $4000
@@ -334,13 +335,13 @@ IrqTuneInfo:							sta IrqTuneInfoAback + 1
 										nop
 										nop
 
-										lda #BLUE
+										lda #BLUE						// set colour for text background
 										sta screen
 										lda #200						// stop smooth scrolling and change to bitmap mode
 										sta smoothpos
 										lda #%00000010					// point to charset at $4800
 										sta charset
-										lda #$1b						// switch on bitmap mode.
+										lda #$1b						// switch off bitmap mode.
 										sta screenmode
 
 										// these are the final IRQ loop setting to go back to the start.
