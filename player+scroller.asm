@@ -1,12 +1,9 @@
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-// TLF music player v1.0
-// the one with the 2x2 scroller
+// TLF music player v1.0 - the one with the 2x2 scroller
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-// memory map
-//
-// music 	: $0c00 - $3fff
+// music 	: $0900 - $3fff
 // 1x1 		: $4800
 // 2x2 		: $5000
 // bitmap 	: $6000
@@ -14,28 +11,14 @@
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-// add colour effect to text at the bottom of the screen.
-// add raster time usage aswell.
-//
-// change keys for the following
-//
-// <- fast forward ?
-// 1 - restart tune
-// space - pause/restart
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
 #import "..\library\standardlibrary.asm"			
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 .const Screen = $4000
 .const color_ram = $d800
-
-// line to display the clock on
-.const timeLine1 = 2
-.const timeLine2 = 3
+.const timeLine1 = 2								// line to display the clock on
+.const timeLine2 = 3								// 2nd line for clock display
 
 .var scroller_zeropage  = $aa						// used for the 2x2 scroller
 .var scroller_line    	= Screen + (40*0)			// line of scroller on screen
@@ -63,15 +46,12 @@ BasicUpstart2(musicplayer)
 
 										// jsr basic_fader
 
-musicplayer:
-
-// switch to bank 1
-										lda $dd00
+musicplayer:							lda $dd00						// switch to bank 1
 										and #%11111100
 										ora #%00000010
 										sta $dd00
 
-										lda #BLUE
+										lda #BLUE						// hardcode screen and border to match the bitmap
 										sta screen
 										sta border									
 
@@ -80,10 +60,9 @@ musicplayer:
 										jsr InitStableRaster
 										jsr InitTimer					// setup clock
 										jsr InitClock		
-										jsr show_Koala
+										jsr show_Koala					// display the bitmap
 
 // clear top 4 lines for scoller text and colour
-
 										ldx #$00
 								!:		lda #LIGHT_GREY
 										sta color_ram,x
@@ -93,6 +72,7 @@ musicplayer:
 										cpx #160
 										bne !-
 
+// clear bottom 5 lines for scoller text and colour
 										ldx #$00
 								!:		lda #32
 										sta tuneInfoLine-40,x
@@ -108,7 +88,7 @@ musicplayer:
 										and #$7f
 										sta tuneInfoLine,x
 										inx
-										cpx #120
+										cpx #160
 										bne !-
 
 // plot PLAY TIME to clock line
@@ -155,9 +135,7 @@ musicplayer:
 										sty $ffff
 										cli
 
-case:									jmp case
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+case:									jmp case				// contnous loop
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "show koala"
 show_Koala:								ldx #00
@@ -181,11 +159,8 @@ show_Koala:								ldx #00
 										bne !-
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "Music IRQ"
-IrqMusic:
-										sta IrqMusicAback + 1
+IrqMusic:								sta IrqMusicAback + 1
 										stx IrqMusicXback + 1
 										sty IrqMusicYback + 1
 
@@ -201,16 +176,14 @@ IrqMusic:
 										jmp stlc
 
 								!: 		jsr music.play
-
 										jsr SetTimer
 
-stlc:
-										lda #200
+stlc:									lda #200
 										sta smoothpos
 										lda #$1b
 										sta screenmode
 
-										jsr scroller_2x2
+										jsr scroller_2x2				// run actual scroll routine
 
 										lda #(0*8)+$32                 // calculate line for top of scroller
 										sta raster
@@ -225,7 +198,6 @@ IrqMusicYback:				        	ldy #$ff
 										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "2x2 Scroller"
-
 IrqScroller:							sta IrqMusicAback + 1
 										stx IrqMusicXback + 1
 										sty IrqMusicYback + 1
@@ -250,11 +222,8 @@ IrqScrollerXback:			         	ldx #$ff
 IrqScrollerYback:			        	ldy #$ff
 										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "Clock IRQ"
-IrqClock:
-										sta IrqClockAback + 1
+IrqClock:								sta IrqClockAback + 1
 										stx IrqClockXback + 1
 										sty IrqClockYback + 1
 	
@@ -276,11 +245,7 @@ IrqClockXback:				         	ldx #$ff
 IrqClockYback:				        	ldy #$ff
 										rti
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "bitmap logo"
-
 IrqBitmap:								sta IrqBitmapAback + 1
 										stx IrqBitmapXback + 1
 										sty IrqBitmapYback + 1
@@ -309,6 +274,10 @@ IrqBitmap:								sta IrqBitmapAback + 1
 										lda #$3b						// switch on bitmap mode.
 										sta screenmode
 
+										jsr infoTextFader
+										jsr infoTextFader2
+										jsr infoTextFader3
+
 										// tune info IRQ
           								lda #$d8
 										sta raster
@@ -325,7 +294,6 @@ IrqBitmapYback:				        	ldy #$ff
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "tune info"
-
 IrqTuneInfo:							sta IrqTuneInfoAback + 1
 										stx IrqTuneInfoXback + 1
 										sty IrqTuneInfoYback + 1
@@ -367,8 +335,7 @@ IrqTuneInfoYback:				        ldy #$ff
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
                                       	.memblock "InitStableRaster"
-InitStableRaster:
-										lda #0
+InitStableRaster:						lda #$00
 										sta spriteset
 
 								!: 		bit screenmode
@@ -420,12 +387,11 @@ InitStableRaster:
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "InitClock"
-InitClock:
-										lda $dc0e
+InitClock:								lda $dc0e
 										ora #%10000000
 										sta $dc0e   // 50Hz
 
-										lda #0
+										lda #$00
 										sta $dc0b   // Stunden = 0 und Uhr stoppen
 										sta $dc0a   // Minuten = 0
 										sta $dc09   // Sekunden = 0
@@ -433,8 +399,7 @@ InitClock:
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "InitTimer"
-InitTimer:
-										lda #0
+InitTimer:								lda #$00
 										sta seconds_lo
 										sta seconds_hi
 										sta minute_lo
@@ -442,8 +407,7 @@ InitTimer:
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "SetTimer2"
-SetTimer:
-										lda $dc09
+SetTimer:								lda $dc09
 										and #%00001111
 										sta seconds_lo
 
@@ -466,9 +430,7 @@ SetTimer:
 										lsr
 										lsr
 										sta minute_hi
-
-										// plot minute hi in 2 x 2 
-
+// plot minute hi in 2 x 2 
 										ldx minute_hi
 										lda chartab,x
 										sta Screen + 40 * timeLine1 + 30
@@ -481,10 +443,7 @@ SetTimer:
 										clc
 										adc #$40
 										sta Screen + 40 * timeLine2 + 31
-
-
-										// plot minute lo in 2 x 2 
-
+// plot minute lo in 2 x 2 
 										ldx minute_lo
 										lda chartab,x
 										sta Screen + 40 * timeLine1 + 32
@@ -497,10 +456,7 @@ SetTimer:
 										clc
 										adc #$40
 										sta Screen + 40 * timeLine2 + 33
-
-
-										// plot second hi in 2 x 2 
-
+// plot second hi in 2 x 2
 										ldx seconds_hi
 										lda chartab,x
 										sta Screen + 40 * timeLine1 + 36
@@ -513,9 +469,7 @@ SetTimer:
 										clc
 										adc #$40
 										sta Screen + 40 * timeLine2 + 37
-
-										// plot second lo in 2 x 2 
-
+// plot second lo in 2 x 2 
 										ldx seconds_lo
 										lda chartab,x
 										sta Screen + 40 * timeLine1 + 38
@@ -530,8 +484,6 @@ SetTimer:
 										sta Screen + 40 * timeLine2 + 39
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "initialise music"
 initialise_music:						lda #$00		
 										tax
@@ -539,28 +491,26 @@ initialise_music:						lda #$00
 										jsr music.init
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "2x2 scroller with pause"
 scroller_2x2:		  					lda scroll_delay
-										beq asc00
+										beq !+
 										dec scroll_delay
 										rts
-asc00:    								lda scroll_xposition
+		    				!:			lda scroll_xposition
 										sec
 										sbc #$03						// hardcode scroll speed
 										and #$07
 										sta scroll_xposition
-										bcc asc01
+										bcc !+
 										rts
-asc01:    								ldx #$00
-asc02:				    				lda scroller_line+1,x
+							!:			ldx #$00
+							!:			lda scroller_line+1,x
 										sta scroller_line,x
 										lda scroller_line+41,x
 										sta scroller_line+40,x
 										inx
 										cpx #$28
-										bne asc02
+										bne !-
 										jsr scroller_nextchar
 										sta scroller_line+39
 										clc
@@ -618,7 +568,81 @@ init_scroll_text:						ldx #<scroll_text
 										sta scroller_tempChar
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+infoTextFader:							lda infoTextDelay
+										sec
+										sbc #$05						// hardcode scroll speed
+										and #$07
+										sta infoTextDelay
+										bcc !+
+										rts
+							!:			ldx #$00
+										lda tune_info_colorTemp
+							!:			sta color_ram + (40 * 21),x
+										inx
+										cpx #$28
+										bne !-
 
+										ldy tune_info_colorCounter
+										cpy tune_info_colorMax
+										bne !+
+										lda #$00
+										sta tune_info_colorCounter
+										rts
+							!:			lda tune_info_colorTable,y
+										sta tune_info_colorTemp
+										inc tune_info_colorCounter
+										rts
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+infoTextFader2:							lda infoTextDelay+1
+										sec
+										sbc #$04						// hardcode scroll speed
+										and #$07
+										sta infoTextDelay+1
+										bcc !+
+										rts
+							!:			ldx #$00
+										lda tune_info_colorTemp+1
+							!:			sta color_ram + (40 * 22),x
+										inx
+										cpx #$28
+										bne !-
+
+										ldy tune_info_colorCounter+1
+										cpy tune_info_colorMax
+										bne !+
+										lda #$00
+										sta tune_info_colorCounter+1
+										rts
+							!:			lda tune_info_colorTable,y
+										sta tune_info_colorTemp+1
+										inc tune_info_colorCounter+1
+										rts
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+infoTextFader3:							lda infoTextDelay+2
+										sec
+										sbc #$06						// hardcode scroll speed
+										and #$07
+										sta infoTextDelay+2
+										bcc !+
+										rts
+							!:			ldx #$00
+										lda tune_info_colorTemp+2
+							!:			sta color_ram + (40 * 23),x
+										inx
+										cpx #$28
+										bne !-
+
+										ldy tune_info_colorCounter+2
+										cpy tune_info_colorMax
+										bne !+
+										lda #$00
+										sta tune_info_colorCounter+2
+										rts
+							!:			lda tune_info_colorTable,y
+										sta tune_info_colorTemp+2
+										inc tune_info_colorCounter+2
+										rts
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.align $100 
@@ -638,22 +662,35 @@ chartab:                               	.byte $30, $31, $32, $33, $34, $35, $36,
 
 clock_text:								.text "tune play time   :  "
 
-tune_info_colorTable:
+
+infoTextDelay:							.byte $00					// used to control the speed of the text fader.
+										.byte $00					// line 2
+										.byte $00					// line 3
+
+tune_info_colorCounter:					.byte $00					// count the current number
 										.byte $00
+										.byte $00
+										
+tune_info_colorMax:						.byte 16					// how many colours in the cycle +1
 
+tune_info_colorTemp:					.byte $00					// line 1
+										.byte $00					// line 2
+										.byte $00					// line 3
+
+tune_info_colorTable:					.byte $01,$0d,$03,$0e,$04,$0b,$06,$06
+										.byte $06,$06,$0b,$04,$0e,$03,$0d										
+										.byte $0f					// final colour of the tune text.
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-// 1x1 text, fade on 1 line at a time.
+// 1x1 text, fade 1 line at a time. 1 more line of text is available if needed.
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.align $100
 										.memblock "tune text"
 									//	.text "----------------------------------------"
-tune_text:								.text "   Donkey King Country (Sid Version)    "
+tune_text:								.text "   Donkey Kong Country (Sid Version)    "
 										.text "       memory usage $1000 - $23d0       "
 										.text "        space to restart the tune       "
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // enter .byte $1f followed by a number from 1 - 6 for different pause's.
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
