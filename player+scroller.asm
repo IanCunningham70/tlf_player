@@ -58,6 +58,13 @@ BasicUpstart2(musicplayer)
 										// jsr basic_fader
 
 musicplayer:
+
+// switch to bank 1
+										lda $dd00
+										and #%11111100
+										ora #%00000010
+										sta $dd00
+
 										lda #BLUE
 										sta screen
 										sta border									
@@ -67,13 +74,6 @@ musicplayer:
 										jsr InitStableRaster
 										jsr InitTimer					// setup clock
 										jsr InitClock		
-
-// switch to bank 1
-										lda $dd00
-										and #%11111100
-										ora #%00000010
-										sta $dd00
-
 										jsr show_Koala
 
 // clear top 4 lines for scoller text and colour
@@ -87,7 +87,6 @@ musicplayer:
 										cpx #160
 										bne !-
 
-
 										ldx #$00
 								!:		lda #32
 										sta tuneInfoLine-40,x
@@ -97,7 +96,7 @@ musicplayer:
 
 // show tune info at bottom of screen
 										ldx #$00
-								!:		lda #GRAY
+								!:		lda #LIGHT_BLUE
 										sta color_ram + (40 * 21),x
 										lda tune_text,x
 										and #$7f
@@ -106,18 +105,25 @@ musicplayer:
 										cpx #120
 										bne !-
 
-// plot : for clock
-										lda #$3a
-										sta Screen + 40 * timeLine1 + 34
+// plot PLAY TIME to clock line
+										ldx #$00
+										ldy #$00
+								!:		lda clock_text,y
+										sta Screen + 40 * timeLine1,x
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine1 + 35
+										sta Screen + 40 * timeLine1+1,x
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 34
+										sta Screen + 40 * timeLine2,x
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 35
+										sta Screen + 40 * timeLine2+1,x
+										inx
+										inx
+										iny
+										cpy #20
+										bne !-
 
 										sei
 										lda #$35
@@ -621,8 +627,12 @@ seconds_hi:                             .byte $00
 minute_lo:                              .byte $00
 minute_hi:                              .byte $00
 chartab:                               	.byte $30, $31, $32, $33, $34, $35, $36, $37, $38, $39		// numbers 0 - 9 for clock
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+							
+									//	.text "12345678901234567890"
+clock_text:								.text "     play time   :  "
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // 1x1 text, fade on 1 line at a time.
