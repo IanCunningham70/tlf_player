@@ -128,7 +128,9 @@ musicplayer:							lda $dd00						// switch to bank 1
 										sty $ffff
 										cli
 
-case:									jmp case				// contnous loop
+										jsr setSprite							// display sprite
+
+case:									jmp case								// contnous loop
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "setsprite"
 setSprite:								lda #%00000001
@@ -278,9 +280,9 @@ IrqBitmap:								sta IrqBitmapAback + 1
 										sta charset
 										lda #$3b						// switch on bitmap mode.
 										sta screenmode
-dec border
-										jsr setSprite					// display play sprite
-inc border
+
+										lda SpriteCurrentColor
+										sta spritecolors
 
 										jsr infoTextFader
 										jsr infoTextFader2
@@ -325,6 +327,8 @@ IrqTuneInfo:							sta IrqTuneInfoAback + 1
 										sta charset
 										lda #$1b						// switch off bitmap mode.
 										sta screenmode
+
+										jsr SpriteColorCycle
 
 										// these are the final IRQ loop setting to go back to the start.
           								lda #$00
@@ -651,7 +655,28 @@ infoTextFader3:							lda infoTextDelay+2
 										inc tune_info_colorCounter+2
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+SpriteColorCycle:						lda SpriteColorDelay
+										sec
+										sbc #$03						// hardcode cycle speed
+										and #$07
+										sta SpriteColorDelay
+										bcc !+
+										rts
+							!:			ldy SpriteColorCounter
+										cpy SpriteColorCounterMax
+										bne !+
+										lda #$00
+										sta SpriteColorCounter
+										rts
+							!:			lda SpriteColorTable,y
+										sta SpriteCurrentColor
+										inc SpriteColorCounter
+										rts
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+// start of ALL data tables
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.align $100 
 										.memblock "data tables"
@@ -685,8 +710,23 @@ tune_info_colorTemp:					.byte $00					// line 1
 tune_info_colorTable:					.byte $01,$0d,$03,$0e,$04,$0b,$06,$06
 										.byte $06,$06,$0b,$04,$0e,$03,$0d										
 										.byte $0f					// final colour of the tune text.
+
+spritePointers:							.byte (play_sprite / 64)
+										.byte (pause_sprite / 64)
+
+SpriteColorDelay:						.byte $00
+SpriteColorCounter:						.byte $00
+SpriteCurrentColor:						.byte $00
+SpriteColorCounterMax:					.byte 15
+
+SpriteColorTable:						.byte $01,$0d,$03,$0e,$04,$0b,$06,$06
+										.byte $06,$06,$0b,$04,$0e,$03,$0d	
+
+
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-sprite00:								.byte (play_sprite-ScreenMemory)/64
+
+
+
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // 1x1 text, fade 1 line at a time. 1 more line of text is available if needed.
