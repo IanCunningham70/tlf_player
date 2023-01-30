@@ -145,13 +145,13 @@ setSprite:								lda #%00000001
 										lda #WHITE
 										sta spritecolors
 
-										ldx #230
+										ldx #240
 										stx sprite0x
-										ldy #65
+										ldy #64
 										sty sprite0y
 
 										lda #(play_sprite / 64)
-										sta ScreenMemory + 2040				// $07f8 + $4000 = $47f8
+										sta ScreenMemory + $03f8				// $03f8 + $4000 = $43f8
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "show koala"
