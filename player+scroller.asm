@@ -91,25 +91,18 @@ musicplayer:							lda $dd00						// switch to bank 1
 										cpx #160
 										bne !-
 
-// plot PLAY TIME to clock line
-										ldx #$00
-										ldy #$00
-								!:		lda clock_text,y
-										sta Screen + 40 * timeLine1,x
+// plot : for clock
+										lda #$3a
+										sta Screen + 40 * timeLine1 + 34
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine1+1,x
+										sta Screen + 40 * timeLine1 + 35
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2,x
+										sta Screen + 40 * timeLine2 + 34
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2+1,x
-										inx
-										inx
-										iny
-										cpy #20
-										bne !-
+										sta Screen + 40 * timeLine2 + 35
 
 										sei
 										lda #$35
@@ -135,7 +128,31 @@ musicplayer:							lda $dd00						// switch to bank 1
 										sty $ffff
 										cli
 
+										jsr setSprite
+
 case:									jmp case				// contnous loop
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+										.memblock "setsprite"
+setSprite:								lda #%00000001
+										sta spriteset
+
+										lda #%00000000
+										sta spriteexpy
+										sta spriteexpx
+										sta spritepr
+										sta spritermsb
+
+										lda #WHITE
+										sta spritecolors
+
+										ldx #230
+										stx sprite0x
+										ldy #65
+										sty sprite0y
+
+										lda #(play_sprite / 64)
+										sta 2040 + Screen
+										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "show koala"
 show_Koala:								ldx #00
@@ -274,9 +291,13 @@ IrqBitmap:								sta IrqBitmapAback + 1
 										lda #$3b						// switch on bitmap mode.
 										sta screenmode
 
+										jsr setSprite
+
+dec border
 										jsr infoTextFader
 										jsr infoTextFader2
 										jsr infoTextFader3
+inc border
 
 										// tune info IRQ
           								lda #$d8
@@ -660,9 +681,6 @@ minute_lo:                              .byte $00
 minute_hi:                              .byte $00
 chartab:                               	.byte $30, $31, $32, $33, $34, $35, $36, $37, $38, $39		// numbers 0 - 9 for clock
 
-clock_text:								.text "tune play time   :  "
-
-
 infoTextDelay:							.byte $00					// used to control the speed of the text fader.
 										.byte $00					// line 2
 										.byte $00					// line 3
@@ -704,8 +722,8 @@ scroll_text:
 										.byte $22 // "
 
 										.text "    composed for the c64 game remix compo in 2023                                  "
-										.text "                   credits go like this ..... tlf logo by premium, this " 
-										.text "charset 2x2 by mad, 1x1 charset by cupid ....... and player code by case with help from dano (thank you)"
+										.text "                   credits go like this ..... tlf logo by premium, " 
+										.text "charset's 2x2 & 1x1 charset by cupid ....... and player code by case with help from dano (thank you)"
 										.text "                    "
 										.byte $00					// end of scroll text
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -713,6 +731,19 @@ scroll_text:
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // import all gfx for the player
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+										.memblock "sprites"
+										* = $4400
+pause_sprite:							.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$03
+										.byte $c3,$c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3
+										.byte $c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3,$c0
+										.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+
+play_sprite:							.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01
+										.byte $f0,$00,$01,$f8,$00,$01,$fc,$00,$01,$fe,$00,$01,$ff,$00,$01,$ff
+										.byte $80,$01,$ff,$80,$01,$ff,$00,$01,$fe,$00,$01,$fc,$00,$01,$f8,$00
+										.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+
+
 										* = $4800
 										.memblock "1x1 font"
 										.import c64 "charsets/1x1-cupid.prg"
