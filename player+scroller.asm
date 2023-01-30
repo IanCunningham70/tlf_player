@@ -15,16 +15,16 @@
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-.const Screen = $4000
+.const ScreenMemory = $4000
 .const color_ram = $d800
-.const timeLine1 = 2								// line to display the clock on
-.const timeLine2 = 3								// 2nd line for clock display
+.const timeLine1 = 2									// line to display the clock on
+.const timeLine2 = 3									// 2nd line for clock display
 
-.var scroller_zeropage  = $aa						// used for the 2x2 scroller
-.var scroller_line    	= Screen + (40*0)			// line of scroller on screen
-.var screen_data 		= $3f40 + Screen			// bitmap screen data
-.var color_data 		= $4328 + Screen			// bitmap color data
-.var tuneInfoLine 		= Screen + (40 * 21)		// tuneinfo line
+.var scroller_zeropage  = $aa							// used for the 2x2 scroller
+.var scroller_line    	= ScreenMemory + (40*0)			// line of scroller on screen
+.var screen_data 		= $3f40 + ScreenMemory			// bitmap screen data
+.var color_data 		= $4328 + ScreenMemory			// bitmap color data
+.var tuneInfoLine 		= ScreenMemory + (40 * 21)		// tuneinfo line
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -93,16 +93,16 @@ musicplayer:							lda $dd00						// switch to bank 1
 
 // plot : for clock
 										lda #$3a
-										sta Screen + 40 * timeLine1 + 34
+										sta ScreenMemory + 40 * timeLine1 + 34
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine1 + 35
+										sta ScreenMemory + 40 * timeLine1 + 35
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 34
+										sta ScreenMemory + 40 * timeLine2 + 34
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 35
+										sta ScreenMemory + 40 * timeLine2 + 35
 
 										sei
 										lda #$35
@@ -128,8 +128,6 @@ musicplayer:							lda $dd00						// switch to bank 1
 										sty $ffff
 										cli
 
-										jsr setSprite
-
 case:									jmp case				// contnous loop
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "setsprite"
@@ -139,6 +137,8 @@ setSprite:								lda #%00000001
 										lda #%00000000
 										sta spriteexpy
 										sta spriteexpx
+
+										lda #%00000000
 										sta spritepr
 										sta spritermsb
 
@@ -150,20 +150,20 @@ setSprite:								lda #%00000001
 										ldy #65
 										sty sprite0y
 
-										lda #(play_sprite / 64)
-										sta 2040 + Screen
+										lda #(play_sprite/64)
+										sta ScreenMemory + 2040
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "show koala"
 show_Koala:								ldx #00
 								!:		lda screen_data,x
-										sta Screen,x
+										sta ScreenMemory,x
 										lda screen_data + (255 * 1),x
-										sta Screen + (255 * 1),x
+										sta ScreenMemory + (255 * 1),x
 										lda screen_data + (255 * 2),x
-										sta Screen + (255 * 2),x
-										lda screen_data + (255 * 3),x
-										sta Screen + (255 * 3),x
+										sta ScreenMemory + (255 * 2),x
+//										lda screen_data + (255 * 3),x
+//										sta ScreenMemory + (255 * 3),x
 										lda color_data,x
 										sta color_ram,x
 										lda color_data + (255 * 1),x
@@ -269,19 +269,10 @@ IrqBitmap:								sta IrqBitmapAback + 1
 
 										// timing to move vold dots off the screen
 										
-										bit $c45e
-										bit $c45e
-										bit $c45e
-										bit $c45e
-										bit $c45e
-										bit $c45e
-
-										nop
-										nop
-										nop
-										nop
-										nop
-
+										ldx #$09
+										dex
+										bne *-1
+	
 										lda #BLACK						// set colour of bitmap background
 										sta screen
 										lda #216						// stop smooth scrolling and change to bitmap mode
@@ -291,13 +282,15 @@ IrqBitmap:								sta IrqBitmapAback + 1
 										lda #$3b						// switch on bitmap mode.
 										sta screenmode
 
-										jsr setSprite
+
 
 dec border
+										jsr setSprite					// display play sprite
+inc border
+
 										jsr infoTextFader
 										jsr infoTextFader2
 										jsr infoTextFader3
-inc border
 
 										// tune info IRQ
           								lda #$d8
@@ -454,55 +447,55 @@ SetTimer:								lda $dc09
 // plot minute hi in 2 x 2 
 										ldx minute_hi
 										lda chartab,x
-										sta Screen + 40 * timeLine1 + 30
+										sta ScreenMemory + 40 * timeLine1 + 30
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine1 + 31
+										sta ScreenMemory + 40 * timeLine1 + 31
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 30
+										sta ScreenMemory + 40 * timeLine2 + 30
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 31
+										sta ScreenMemory + 40 * timeLine2 + 31
 // plot minute lo in 2 x 2 
 										ldx minute_lo
 										lda chartab,x
-										sta Screen + 40 * timeLine1 + 32
+										sta ScreenMemory + 40 * timeLine1 + 32
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine1 + 33
+										sta ScreenMemory + 40 * timeLine1 + 33
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 32
+										sta ScreenMemory + 40 * timeLine2 + 32
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 33
+										sta ScreenMemory + 40 * timeLine2 + 33
 // plot second hi in 2 x 2
 										ldx seconds_hi
 										lda chartab,x
-										sta Screen + 40 * timeLine1 + 36
+										sta ScreenMemory + 40 * timeLine1 + 36
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine1 + 37
+										sta ScreenMemory + 40 * timeLine1 + 37
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 36
+										sta ScreenMemory + 40 * timeLine2 + 36
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 37
+										sta ScreenMemory + 40 * timeLine2 + 37
 // plot second lo in 2 x 2 
 										ldx seconds_lo
 										lda chartab,x
-										sta Screen + 40 * timeLine1 + 38
+										sta ScreenMemory + 40 * timeLine1 + 38
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine1 + 39
+										sta ScreenMemory + 40 * timeLine1 + 39
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 38
+										sta ScreenMemory + 40 * timeLine2 + 38
 										clc
 										adc #$40
-										sta Screen + 40 * timeLine2 + 39
+										sta ScreenMemory + 40 * timeLine2 + 39
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "initialise music"
@@ -699,6 +692,7 @@ tune_info_colorTable:					.byte $01,$0d,$03,$0e,$04,$0b,$06,$06
 										.byte $06,$06,$0b,$04,$0e,$03,$0d										
 										.byte $0f					// final colour of the tune text.
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+sprite00:								.byte (play_sprite-ScreenMemory)/64
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // 1x1 text, fade 1 line at a time. 1 more line of text is available if needed.
@@ -709,6 +703,7 @@ tune_info_colorTable:					.byte $01,$0d,$03,$0e,$04,$0b,$06,$06
 tune_text:								.text "   Donkey Kong Country (Sid Version)    "
 										.text "       memory usage $1000 - $23d0       "
 										.text "        space to restart the tune       "
+										.text "                                        "
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // enter .byte $1f followed by a number from 1 - 6 for different pause's.
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -723,7 +718,7 @@ scroll_text:
 
 										.text "    composed for the c64 game remix compo in 2023                                  "
 										.text "                   credits go like this ..... tlf logo by premium, " 
-										.text "charset's 2x2 & 1x1 charset by cupid ....... and player code by case with help from dano (thank you)"
+										.text "charset's 2x2 & 1x1 charset by cupid ....... and code by case with help from dano (thank you)"
 										.text "                    "
 										.byte $00					// end of scroll text
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -732,7 +727,7 @@ scroll_text:
 // import all gfx for the player
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "sprites"
-										* = $4400
+										* = $4700
 pause_sprite:							.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$03
 										.byte $c3,$c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3
 										.byte $c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3,$c0
@@ -742,7 +737,6 @@ play_sprite:							.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 										.byte $f0,$00,$01,$f8,$00,$01,$fc,$00,$01,$fe,$00,$01,$ff,$00,$01,$ff
 										.byte $80,$01,$ff,$80,$01,$ff,$00,$01,$fe,$00,$01,$fc,$00,$01,$f8,$00
 										.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-
 
 										* = $4800
 										.memblock "1x1 font"
