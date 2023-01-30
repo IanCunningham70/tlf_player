@@ -162,8 +162,8 @@ show_Koala:								ldx #00
 										sta ScreenMemory + (255 * 1),x
 										lda screen_data + (255 * 2),x
 										sta ScreenMemory + (255 * 2),x
-//										lda screen_data + (255 * 3),x
-//										sta ScreenMemory + (255 * 3),x
+										lda screen_data + (255 * 3),x
+										sta ScreenMemory + (255 * 3),x
 										lda color_data,x
 										sta color_ram,x
 										lda color_data + (255 * 1),x
@@ -184,9 +184,6 @@ IrqMusic:								sta IrqMusicAback + 1
 										lda #$ef    					// space to restart music 
 										cmp $dc01
 										bne !+
-										lda #0
-										tay
-										tax
 										jsr music.init
 										jsr InitTimer
 										jsr InitClock
@@ -349,8 +346,8 @@ IrqTuneInfoYback:				        ldy #$ff
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
                                       	.memblock "InitStableRaster"
-InitStableRaster:						lda #$00
-										sta spriteset
+InitStableRaster:						//lda #$00
+										//sta spriteset
 
 								!: 		bit screenmode
 										bpl !-
@@ -724,10 +721,10 @@ scroll_text:
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-// import all gfx for the player
+// import all gfx 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "sprites"
-										* = $4700
+										* = $4400
 pause_sprite:							.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$03
 										.byte $c3,$c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3
 										.byte $c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3,$c0,$03,$c3,$c0
