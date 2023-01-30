@@ -55,12 +55,12 @@ musicplayer:							lda $dd00						// switch to bank 1
 										sta screen
 										sta border									
 
-										jsr initialise_music
-										jsr init_scroll_text
 										jsr InitStableRaster
 										jsr InitTimer					// setup clock
 										jsr InitClock		
 										jsr show_Koala					// display the bitmap
+										jsr initialise_music
+										jsr init_scroll_text
 
 // clear top 4 lines for scoller text and colour
 										ldx #$00
@@ -150,8 +150,8 @@ setSprite:								lda #%00000001
 										ldy #65
 										sty sprite0y
 
-										lda #(play_sprite/64)
-										sta ScreenMemory + 2040
+										lda #(play_sprite / 64)
+										sta ScreenMemory + 2040				// $07f8 + $4000 = $47f8
 										rts
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "show koala"
@@ -199,7 +199,7 @@ stlc:									lda #200
 
 										jsr scroller_2x2				// run actual scroll routine
 
-										lda #(0*8)+$32                 // calculate line for top of scroller
+										lda #(0*8)+$32                 	// calculate line for top of scroller
 										sta raster
 										ldx #<IrqScroller
 										ldy #>IrqScroller
@@ -216,7 +216,7 @@ IrqScroller:							sta IrqMusicAback + 1
 										stx IrqMusicXback + 1
 										sty IrqMusicYback + 1
 
-										lda #%00000100					// point to charset at $4800
+										lda #%00000100					// point to charset at $4800, screen at $4000
 										sta charset
 
 										lda smoothpos
@@ -278,9 +278,6 @@ IrqBitmap:								sta IrqBitmapAback + 1
 										sta charset
 										lda #$3b						// switch on bitmap mode.
 										sta screenmode
-
-
-
 dec border
 										jsr setSprite					// display play sprite
 inc border
@@ -324,7 +321,7 @@ IrqTuneInfo:							sta IrqTuneInfoAback + 1
 										sta screen
 										lda #200						// stop smooth scrolling and change to bitmap mode
 										sta smoothpos
-										lda #%00000010					// point to charset at $4800
+										lda #%00000010					// point to charset at $4800, screen at $4000
 										sta charset
 										lda #$1b						// switch off bitmap mode.
 										sta screenmode
