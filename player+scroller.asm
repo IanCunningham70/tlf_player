@@ -783,7 +783,7 @@ SpriteColorTable:						.byte $01,$0d,$03,$0e,$04,$0b,$06,$06
 									//	.text "----------------------------------------"
 tune_text:								.text "   Donkey Kong Country (Sid Version)    "
 										.text "       memory usage $1000 - $23d0       "
-										.text "        space to restart the tune       "
+										.text "       press 1 to restart the tune      "
 										.text "                                        "
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // enter .byte $1f followed by a number from 1 - 6 for different pause's.
