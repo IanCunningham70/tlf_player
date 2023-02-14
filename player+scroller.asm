@@ -62,6 +62,12 @@ musicplayer:							lda $dd00						// switch to bank 1
 										jsr initialise_music
 										jsr init_scroll_text
 
+										lda #$20
+										sta MusicPLay
+										sta ClockTime
+										lda #$01
+										sta toggleByte
+
 // clear top 4 lines for scoller text and colour
 										ldx #$00
 								!:		lda #LIGHT_GREY
@@ -130,7 +136,7 @@ musicplayer:							lda $dd00						// switch to bank 1
 
 										jsr setSprite							// display sprite
 
-case:									jmp case								// contnous loop
+case:									jmp case
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 										.memblock "setsprite"
 setSprite:								lda #%00000001
@@ -183,18 +189,10 @@ IrqMusic:								sta IrqMusicAback + 1
 										stx IrqMusicXback + 1
 										sty IrqMusicYback + 1
 
-										lda #$ef    					// space to restart music 
-										cmp $dc01
-										bne !+
-										jsr music.init
-										jsr InitTimer
-										jsr InitClock
-										jmp stlc
+MusicPLay:						 		jsr music.play
+ClockTime:								jsr SetTimer
 
-								!: 		jsr music.play
-										jsr SetTimer
-
-stlc:									lda #200
+										lda #200
 										sta smoothpos
 										lda #$1b
 										sta screenmode
@@ -287,6 +285,55 @@ IrqBitmap:								sta IrqBitmapAback + 1
 										jsr infoTextFader
 										jsr infoTextFader2
 										jsr infoTextFader3
+
+ScanKeyboard:                        	lda $dc01    // cia1: data port register b
+
+// press 1 to restart the tune, also reset the clock
+
+CheckResetTune:                         cmp #$fe
+										bne CheckFastForward
+
+										jsr initialise_music
+										jsr InitTimer
+										jsr InitClock
+										lda #$20
+										sta MusicPLay
+										sta ClockTime
+										lda #$01
+										sta toggleByte
+
+										jmp KeyboardScanned
+
+// tha usual back-arrow key to play tune quicker, remember to also run the clock faster
+
+CheckFastForward:                       cmp #$fd
+										bne CheckSpaceBar
+
+										jsr music.play
+										jsr SetTimer
+										jmp KeyboardScanned
+
+// start / stop toggle, kill volume. 
+CheckSpaceBar:                          cmp #$ef
+										bne KeyboardScanned
+
+										lda toggleByte
+										beq !+
+
+										lda #$ad
+										sta MusicPLay
+										sta ClockTime
+										lda #$00
+										sta toggleByte
+										sta $d41f
+										jmp KeyboardScanned
+
+								!:      lda #$20
+										sta MusicPLay
+										sta ClockTime
+										lda #$01
+										sta toggleByte
+KeyboardScanned:												
 
 										// tune info IRQ
           								lda #$d8
@@ -686,7 +733,7 @@ scroll_delay:   						.byte $00
 scroller_width:    						.byte $00
 scroller_tempChar:    					.byte $00
 scroller_pauseLength:   				.byte 100,125,150,175,200,225,250
-
+toggleByte:								.byte $00													// toggle music on / off
 seconds_lo:                             .byte $00
 seconds_hi:                             .byte $00
 minute_lo:                              .byte $00
